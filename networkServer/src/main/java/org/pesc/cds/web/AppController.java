@@ -20,6 +20,7 @@ import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.tomcat.util.http.fileupload.IOUtils;
+import org.json.JSONException;
 import org.json.JSONObject;
 import org.pesc.cds.domain.Transaction;
 import org.pesc.cds.repository.TransactionService;
@@ -52,24 +53,24 @@ public class AppController {
     @Value("${directory.server.base.url}")
     private String directoryServer;
 
-    private String localServerId;
+    private final String localServerId;
 
     private JSONObject organization;
 
-    private OrganizationService organizationService;
+    private final OrganizationService organizationService;
 
     @Autowired
     private TransactionService transactionService;
 
     @Autowired
-    public AppController( @Value("${networkServer.id}") String edExID, OrganizationService organizationService) {
+    public AppController( @Value("${networkServer.id}") final String edExID, final OrganizationService organizationService) {
         this.organizationService = organizationService;
         localServerId = edExID;
         organization = organizationService.getOrganization(Integer.valueOf(localServerId));
     }
 
 
-    private boolean hasRole(Collection<? extends GrantedAuthority> authorities, String role) {
+    private boolean hasRole(final Collection<? extends GrantedAuthority> authorities, final String role) {
         boolean hasRole = false;
         for (GrantedAuthority authority : authorities) {
             hasRole = authority.getAuthority().equals(role);
@@ -81,7 +82,7 @@ public class AppController {
     }
 
 
-    private boolean buildCommonModel(Model model) {
+    private boolean buildCommonModel(final Model model) {
         model.addAttribute("directoryServer", directoryServer);
 
         boolean isAuthenticated = false;
@@ -126,7 +127,7 @@ public class AppController {
 
 
     @RequestMapping({"/documentation"})
-    public String getDocumentation(Model model) {
+    public String getDocumentation(final Model model) throws JSONException {
         buildCommonModel(model);
 
         model.addAttribute("organizationName", organization.getString("name"));
@@ -137,7 +138,7 @@ public class AppController {
 
 
 
-    private void setContentType(HttpServletResponse response, String fileFormat) {
+    private void setContentType(final HttpServletResponse response, final String fileFormat) {
         if (fileFormat.equalsIgnoreCase("pdf")) {
             response.setContentType("application/pdf");
         } else if (fileFormat.equalsIgnoreCase("text")) {
@@ -157,10 +158,10 @@ public class AppController {
 
     @RequestMapping(value = "/files", method = RequestMethod.GET)
     public void getFile(
-            @RequestParam("tran_id") Integer tranID,
-            @RequestParam(value = "show_request", required = false) Boolean showRequest,
-            @RequestParam(value = "show_acknowledgement", required = false) Boolean showAck,
-            HttpServletResponse response) {
+            @RequestParam("tran_id") final Integer tranID,
+            @RequestParam(value = "show_request", required = false) final Boolean showRequest,
+            @RequestParam(value = "show_acknowledgement", required = false) final Boolean showAck,
+            final HttpServletResponse response) {
         try {
 
             //TODO for security: create randomize the transaction ID with a lookup table.
@@ -187,8 +188,8 @@ public class AppController {
 
     @RequestMapping(value = "/files/acknowledgement", method = RequestMethod.GET)
     public void getFile(
-            @RequestParam("tran_id") Integer tranID,
-            HttpServletResponse response) {
+            @RequestParam("tran_id") final Integer tranID,
+            final HttpServletResponse response) {
         try {
 
             Transaction transaction = transactionService.findById(tranID);
@@ -212,7 +213,7 @@ public class AppController {
     }
 
     @RequestMapping("/admin")
-    public String getAdminPage(Model model) {
+    public String getAdminPage(final Model model) {
 
         buildCommonModel(model);
 
@@ -220,7 +221,7 @@ public class AppController {
     }
 
     @RequestMapping("/upload-status")
-    public String getUploadStatus(Model model) {
+    public String getUploadStatus(final Model model) {
 
         buildCommonModel(model);
 
@@ -228,7 +229,7 @@ public class AppController {
     }
 
     @RequestMapping("/transaction-report")
-    public String getTransactionsPage(Model model) {
+    public String getTransactionsPage(final Model model) {
 
         buildCommonModel(model);
 
@@ -248,7 +249,7 @@ public class AppController {
     }
 
     @RequestMapping("/upload")
-    public String getTransfersPage(Model model) {
+    public String getTransfersPage(final Model model) throws JSONException {
 
         buildCommonModel(model);
 
@@ -260,7 +261,7 @@ public class AppController {
     }
 
     @RequestMapping("/transcript-request-form")
-    public String getTranscriptRequestForm(Model model) {
+    public String getTranscriptRequestForm(final Model model) {
 
         buildCommonModel(model);
 
@@ -268,7 +269,7 @@ public class AppController {
     }
 
     @RequestMapping("/actuator-view")
-    public String getActuatorView(Model model) {
+    public String getActuatorView(final Model model) {
 
         buildCommonModel(model);
 
@@ -276,21 +277,21 @@ public class AppController {
     }
 
     @RequestMapping({"/", "/home"})
-    public String viewHome(Model model) {
+    public String viewHome(final Model model) {
 
         buildCommonModel(model);
         return "home";
     }
 
     @RequestMapping("/about")
-    public String getAboutPage(Model model) {
+    public String getAboutPage(final Model model) {
         buildCommonModel(model);
 
         return "fragments :: about";
     }
 
     @RequestMapping("/user-account")
-    public String userAccount(Model model, Principal principal) {
+    public String userAccount(final Model model, final Principal principal) {
         model.addAttribute("name", principal.getName());
         return "fragments :: user-account";
     }

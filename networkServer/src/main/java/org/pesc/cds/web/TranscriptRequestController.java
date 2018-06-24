@@ -24,6 +24,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 import org.pesc.cds.domain.Transaction;
 import org.pesc.cds.model.*;
@@ -102,7 +103,7 @@ public class TranscriptRequestController {
     @Qualifier("myRestTemplate")
     private OAuth2RestTemplate restTemplate;
 
-    private String getEmailAddress(JSONObject edexOrganization) {
+    private String getEmailAddress(final JSONObject edexOrganization) throws JSONException {
         JSONArray contacts = edexOrganization.getJSONArray("contacts");
         if(contacts.length()>0){
             JSONObject contact = contacts.getJSONObject(0);
@@ -111,12 +112,16 @@ public class TranscriptRequestController {
 
         return null;
     }
+    
     /**
      * The source school indicates the school that is requesting the transcript.
+     * 
      * @param builder
      * @param schoolDTO
+     * @throws JSONException
      */
-    private void constructTranscriptRequestSource(TranscriptRequestBuilder builder, RequestingSchoolDTO schoolDTO, JSONObject edexOrganization) {
+    private void constructTranscriptRequestSource(final TranscriptRequestBuilder builder, final RequestingSchoolDTO schoolDTO, final JSONObject edexOrganization)
+            throws JSONException {
 
         Map<SchoolCodeType, String> schoolCodes = Maps.newHashMap();
 
@@ -172,7 +177,7 @@ public class TranscriptRequestController {
         return phone;
     }
 
-    private TranscriptRequestBuilder constructStudent(TranscriptRequestBuilder builder, TranscriptRequestDTO transcriptRequestDTO, RecordHolderDTO schoolDTO, JSONObject edexOrganization) {
+    private TranscriptRequestBuilder constructStudent(final TranscriptRequestBuilder builder, final TranscriptRequestDTO transcriptRequestDTO, final RecordHolderDTO schoolDTO, final JSONObject edexOrganization) {
         Map<SchoolCodeType, String> currentlyAttendedSchoolCodes = Maps.newHashMap();
 
 
@@ -221,10 +226,13 @@ public class TranscriptRequestController {
 
     /**
      * The destination is the record holder's school.
+     * 
      * @param builder
      * @param schoolDTO
+     * @throws JSONException
      */
-    private void constructTranscriptRequestDestination(TranscriptRequestBuilder builder, RecordHolderDTO schoolDTO, JSONObject edexOrganization) {
+    private void constructTranscriptRequestDestination(final TranscriptRequestBuilder builder, final RecordHolderDTO schoolDTO, final JSONObject edexOrganization)
+            throws JSONException {
 
         Map<SchoolCodeType, String> schoolCodes = Maps.newHashMap();
 
@@ -250,7 +258,7 @@ public class TranscriptRequestController {
 
     }
 
-    private JSONObject getEDExOrg(SchoolDTO schoolDTO){
+    private JSONObject getEDExOrg(final SchoolDTO schoolDTO){
         //get the EDExchange organization object from the directory server...
         Preconditions.checkArgument(StringUtils.isNotBlank(schoolDTO.getSchoolCode()), "School Code is required");
         Preconditions.checkArgument(StringUtils.isNotBlank(schoolDTO.getSchoolCodeType()), "School Code Type is required");
@@ -264,8 +272,8 @@ public class TranscriptRequestController {
 
     @RequestMapping(method= RequestMethod.POST)
     @ResponseBody
-    public List<Transaction> transcriptRequest( @RequestBody TranscriptRequestDTO transcriptRequestDTO
-    ) {
+    public List<Transaction> transcriptRequest( @RequestBody final TranscriptRequestDTO transcriptRequestDTO
+    ) throws JSONException {
 
         Preconditions.checkArgument(transcriptRequestDTO.getDestinationInstitutions().size() == 1) ;
         Preconditions.checkArgument(transcriptRequestDTO.getSourceInstitutions().size() == 1);
@@ -402,7 +410,7 @@ public class TranscriptRequestController {
     }
 
 
-    private void sendDocument(File outboxFile, String endpointURI, Transaction tx, String fileFormat, String documentType, String department) throws IOException {
+    private void sendDocument(final File outboxFile, final String endpointURI, final Transaction tx, final String fileFormat, final String documentType, final String department) throws IOException {
 
         byte[] fileSignature = pkiService.createDigitalSignature(new FileInputStream(outboxFile), pkiService.getSigningKeys().getPrivate());
         try {
@@ -466,7 +474,7 @@ public class TranscriptRequestController {
     }
 
     @ExceptionHandler
-    void handleIllegalArgumentException(IllegalArgumentException e, HttpServletResponse response) throws IOException {
+    void handleIllegalArgumentException(final IllegalArgumentException e, final HttpServletResponse response) throws IOException {
         response.sendError(HttpStatus.BAD_REQUEST.value());
     }
 

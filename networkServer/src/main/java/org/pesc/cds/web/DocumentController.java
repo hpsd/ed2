@@ -28,6 +28,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 import org.pesc.cds.domain.Transaction;
 import org.pesc.cds.model.EndpointMode;
@@ -161,7 +162,7 @@ public class DocumentController {
     @RequestMapping(value = "/send", method = RequestMethod.GET)
     @ResponseBody
     @Produces(MediaType.APPLICATION_JSON)
-    public Transaction sendDocument(@RequestParam("transaction_id") Integer tranID) {
+    public Transaction sendDocument(@RequestParam("transaction_id") final Integer tranID) throws JSONException {
 
         Transaction tx = transactionService.findById(tranID);
 
@@ -250,7 +251,7 @@ public class DocumentController {
     }
 
 
-    private String getPEMPublicKeyByOrgID(Integer orgID) {
+    private String getPEMPublicKeyByOrgID(final Integer orgID) {
         StringBuilder uri = new StringBuilder(directoryServer + "/services/rest/v1/organizations/" + orgID + "/public-key");
         String pemPublicKey = null;
         HttpHeaders headers = new HttpHeaders();
@@ -270,14 +271,14 @@ public class DocumentController {
     }
 
 
-    private String getEndpointURIForSchool(String destinationSchoolCode,
-                                           String destinationSchoolCodeType,
-                                           String documentFormat,
-                                           String documentType,
-                                           String department,
-                                           Transaction tx,
-                                           List<String> destinationOrganizationNames,
-                                           EndpointMode mode) {
+    private String getEndpointURIForSchool(final String destinationSchoolCode,
+                                           final String destinationSchoolCodeType,
+                                           final String documentFormat,
+                                           final String documentType,
+                                           final String department,
+                                           final Transaction tx,
+                                           final List<String> destinationOrganizationNames,
+            final EndpointMode mode) throws JSONException {
 
 
         Integer orgID = null;
@@ -292,7 +293,8 @@ public class DocumentController {
         return organizationService.getEndpointForOrg(orgID, documentFormat, documentType, department, mode);
     }
 
-    private int getOrganizationId(String destinationSchoolCode, String destinationSchoolCodeType, List<String> destinationOrganizationNames) {
+    private int getOrganizationId(final String destinationSchoolCode, final String destinationSchoolCodeType,
+            final List<String> destinationOrganizationNames) throws JSONException {
         int orgID = 0;
         JSONObject organization = organizationService.getOrganization(destinationSchoolCode, destinationSchoolCodeType);
         if (organization != null) {
@@ -323,28 +325,29 @@ public class DocumentController {
      * @param trStudentPartialSsn
      * @param trStudentCurrentlyEnrolled
      * @return
+     * @throws JSONException
      */
     @RequestMapping(value = "/outbox", method = RequestMethod.POST)
     @ResponseBody
     public Transaction sendFile(
-            @RequestParam(value = "file") MultipartFile multipartFile,
-            @RequestParam(value = "file_format", required = true) String fileFormat,
-            @RequestParam(value = "document_type", required = false) String documentType,
-            @RequestParam(value = "department", required = false) String department,
-            @RequestParam(value = "source_school_code", required = false) String sourceSchoolCode,
-            @RequestParam(value = "source_school_code_type", required = false) String sourceSchoolCodeType,
-            @RequestParam(value = "destination_school_code", required = true) String destinationSchoolCode,
-            @RequestParam(value = "destination_school_code_type", required = true) String destinationSchoolCodeType,
-            @RequestParam(value = "student_release", required = false) Boolean trStudentRelease,
-            @RequestParam(value = "student_released_method", required = false) String trStudentReleasedMethod,
-            @RequestParam(value = "student_birth_date", required = false) String studentBirthDate,
-            @RequestParam(value = "student_first_name", required = false) String trStudentFirstName,
-            @RequestParam(value = "student_middle_name", required = false) String trStudentMiddleName,
-            @RequestParam(value = "student_last_name", required = false) String trStudentLastName,
-            @RequestParam(value = "student_email", required = false) String trStudentEmail,
-            @RequestParam(value = "student_partial_ssn", required = false) String trStudentPartialSsn,
-            @RequestParam(value = "student_currently_enrolled", required = false) Boolean trStudentCurrentlyEnrolled
-    ) {
+            @RequestParam(value = "file") final MultipartFile multipartFile,
+            @RequestParam(value = "file_format", required = true) final String fileFormat,
+            @RequestParam(value = "document_type", required = false) final String documentType,
+            @RequestParam(value = "department", required = false) final String department,
+            @RequestParam(value = "source_school_code", required = false) final String sourceSchoolCode,
+            @RequestParam(value = "source_school_code_type", required = false) final String sourceSchoolCodeType,
+            @RequestParam(value = "destination_school_code", required = true) final String destinationSchoolCode,
+            @RequestParam(value = "destination_school_code_type", required = true) final String destinationSchoolCodeType,
+            @RequestParam(value = "student_release", required = false) final Boolean trStudentRelease,
+            @RequestParam(value = "student_released_method", required = false) final String trStudentReleasedMethod,
+            @RequestParam(value = "student_birth_date", required = false) final String studentBirthDate,
+            @RequestParam(value = "student_first_name", required = false) final String trStudentFirstName,
+            @RequestParam(value = "student_middle_name", required = false) final String trStudentMiddleName,
+            @RequestParam(value = "student_last_name", required = false) final String trStudentLastName,
+            @RequestParam(value = "student_email", required = false) final String trStudentEmail,
+            @RequestParam(value = "student_partial_ssn", required = false) final String trStudentPartialSsn,
+            @RequestParam(value = "student_currently_enrolled", required = false) final Boolean trStudentCurrentlyEnrolled
+    ) throws JSONException {
 
         Transaction tx = new Transaction();
 
@@ -633,18 +636,18 @@ public class DocumentController {
             @Authorization(value = "oauth", scopes = {@AuthorizationScope( scope = "read_inbox,write_inbox", description = "OAuth 2.0")})
     })
     public void receiveFile(
-            @RequestParam(value = "recipient_id", required = false) Integer recipientId,
-            @RequestParam(value = "sender_id", required = false) Integer senderId,
-            @RequestParam(value = "signer_id", required = false) Integer signerId,
-            @RequestParam(value = "file") MultipartFile multipartFile,
-            @RequestParam(value = "signature") MultipartFile signatureFile,
-            @RequestParam(value = "file_format", required = false) String fileFormat,
-            @RequestParam(value = "document_type", required = false) String documentType,
-            @RequestParam(value = "department", required = false) String department,
-            @RequestParam(value = "transaction_id", required = false) Integer transactionId,
-            @RequestParam(value = "ack_url", required = false) String ackURL,
-            @RequestParam(value = "transcript_request_file", required = false) MultipartFile transcriptRequestFile,
-            HttpServletRequest request
+            @RequestParam(value = "recipient_id", required = false) final Integer recipientId,
+            @RequestParam(value = "sender_id", required = false) final Integer senderId,
+            @RequestParam(value = "signer_id", required = false) final Integer signerId,
+            @RequestParam(value = "file") final MultipartFile multipartFile,
+            @RequestParam(value = "signature") final MultipartFile signatureFile,
+            @RequestParam(value = "file_format", required = false) final String fileFormat,
+            @RequestParam(value = "document_type", required = false) final String documentType,
+            @RequestParam(value = "department", required = false) final String department,
+            @RequestParam(value = "transaction_id", required = false) final Integer transactionId,
+            @RequestParam(value = "ack_url", required = false) final String ackURL,
+            @RequestParam(value = "transcript_request_file", required = false) final MultipartFile transcriptRequestFile,
+            final HttpServletRequest request
     ) throws SAXException, IOException, OperationNotSupportedException {
 
         log.info(request.getRequestURI().toString());

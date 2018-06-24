@@ -20,6 +20,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 import org.pesc.cds.config.CacheConfig;
 import org.pesc.cds.domain.Transaction;
@@ -37,8 +38,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
-import java.io.IOException;
-import java.net.URLEncoder;
 import java.util.Collections;
 import java.util.List;
 
@@ -69,15 +68,15 @@ public class OrganizationService {
 
 
     @Cacheable(ORGANIZATION)
-    public JSONObject getOrganization(Integer organizationId){
+    public JSONObject getOrganization(final Integer organizationId){
         return getOrganization(organizationId, null, null);
     }
 
-    public JSONObject getOrganization(String schoolCode, String schoolCodeType){
+    public JSONObject getOrganization(final String schoolCode, final String schoolCodeType){
         return getOrganization(null, schoolCode, schoolCodeType);
     }
 
-    private JSONObject getOrganization(Integer organizationId, String schoolCode, String schoolCodeType){
+    private JSONObject getOrganization(final Integer organizationId, final String schoolCode, final String schoolCodeType){
         JSONObject organization = null;
 
         try {
@@ -110,7 +109,7 @@ public class OrganizationService {
         return organization;
     }
 
-    public boolean isInstitution(JSONObject organization){
+    public boolean isInstitution(final JSONObject organization) throws JSONException {
         boolean institution = false;
         JSONArray organizationTypes = organization.getJSONArray("organizationTypes");
         for(int i=0; i<organizationTypes.length(); i++){
@@ -123,7 +122,8 @@ public class OrganizationService {
         return institution;
     }
 
-    public String getEndpointForOrg(Integer orgID, String documentFormat, String documentType, String department, EndpointMode mode) {
+    public String getEndpointForOrg(final Integer orgID, final String documentFormat, final String documentType, final String department,
+            final EndpointMode mode) throws JSONException {
 
         String endpointURI = null;
 
@@ -160,7 +160,9 @@ public class OrganizationService {
         return endpointURI;
     }
 
-    public String getEndpointURIForSchool(String destinationSchoolCode, String destinationSchoolCodeType, String documentFormat, String documentType, String department, Transaction tx, List<String> destinationOrganizationNames, EndpointMode mode) {
+    public String getEndpointURIForSchool(final String destinationSchoolCode, final String destinationSchoolCodeType, final String documentFormat,
+            final String documentType, final String department, final Transaction tx, final List<String> destinationOrganizationNames,
+            final EndpointMode mode) throws JSONException {
 
 
         Integer orgID = null;
@@ -184,7 +186,8 @@ public class OrganizationService {
         return idListEntity.idList;
     }
 
-    public int getOrganizationId(String destinationSchoolCode, String destinationSchoolCodeType, List<String> destinationOrganizationNames) {
+    public int getOrganizationId(final String destinationSchoolCode, final String destinationSchoolCodeType,
+            final List<String> destinationOrganizationNames) throws JSONException {
         log.debug("Getting endpoint for org");
         int orgID = 0;
         JSONObject organization = getOrganization(destinationSchoolCode, destinationSchoolCodeType);
