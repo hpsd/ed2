@@ -25,7 +25,6 @@ import org.pesc.cds.model.DocumentType;
 import org.pesc.cds.model.EndpointMode;
 import org.pesc.cds.model.TransactionStatus;
 import org.pesc.cds.repository.StringUtils;
-import org.pesc.cds.repository.TransactionService;
 import org.pesc.cds.utils.ErrorUtils;
 import org.pesc.sdk.core.coremain.v1_14.AcknowledgmentCodeType;
 import org.pesc.sdk.core.coremain.v1_14.DocumentTypeCodeType;
@@ -36,7 +35,6 @@ import org.pesc.sdk.message.functionalacknowledgement.v1_2.Acknowledgment;
 import org.pesc.sdk.message.functionalacknowledgement.v1_2.AcknowledgmentDataType;
 import org.pesc.sdk.message.functionalacknowledgement.v1_2.SyntaxErrorLocatorType;
 import org.pesc.sdk.message.functionalacknowledgement.v1_2.SyntaxErrorType;
-import org.pesc.sdk.message.functionalacknowledgement.v1_2.impl.AcknowledgmentImpl;
 import org.pesc.sdk.message.transcriptrequest.v1_4.TranscriptRequest;
 import org.pesc.sdk.message.transcriptresponse.v1_4.TranscriptResponse;
 import org.pesc.sdk.sector.academicrecord.v1_9.*;
@@ -100,9 +98,6 @@ public class FileProcessorService {
     private OrganizationService organizationService;
 
     @Autowired
-    private TransactionService transactionService;
-
-    @Autowired
     private PKIService pkiService;
 
     @Autowired
@@ -112,25 +107,25 @@ public class FileProcessorService {
     @Qualifier("myRestTemplate")
     private OAuth2RestOperations restTemplate;
 
-    private File ackDir;
+    private final File ackDir;
 
     private static final org.pesc.sdk.message.functionalacknowledgement.v1_2.ObjectFactory functionalacknowledgementObjectFactory = new org.pesc.sdk.message.functionalacknowledgement.v1_2.ObjectFactory();
     private static final org.pesc.sdk.sector.academicrecord.v1_9.ObjectFactory academicRecordObjectFactory = new org.pesc.sdk.sector.academicrecord.v1_9.ObjectFactory();
     private static final org.pesc.sdk.message.transcriptresponse.v1_4.ObjectFactory transcriptResponseObjectFactory = new org.pesc.sdk.message.transcriptresponse.v1_4.ObjectFactory();
 
-    public FileProcessorService(Environment env){
+    public FileProcessorService(final Environment env){
         ackDir = new File(env.getProperty("networkServer.ack.path"));
         ackDir.mkdirs();
     }
 
-    public void sendAck(String ackURL, Acknowledgment acknowledgment) {
+    public void sendAck(final String ackURL, final Acknowledgment acknowledgment) {
 
         if (ackURL != null && !ackURL.isEmpty()) {
 
 
             try {
                 ResponseEntity<String> response = restTemplate.exchange
-                        (ackURL, HttpMethod.POST, new org.springframework.http.HttpEntity<Acknowledgment>((AcknowledgmentImpl)acknowledgment), String.class);
+                        (ackURL, HttpMethod.POST, new org.springframework.http.HttpEntity<Acknowledgment>(acknowledgment), String.class);
 
                 log.debug(response.getStatusCode());
                 if (response.getStatusCode() != HttpStatus.OK) {
@@ -163,13 +158,13 @@ public class FileProcessorService {
      * @param ackDocID
      * @return
      */
-    private Acknowledgment handleTranscriptRequest(Transaction transaction, String ackDocID) {
+    private Acknowledgment handleTranscriptRequest(final Transaction transaction, final String ackDocID) {
 
 
         return null;
     }
 
-    private void sendTranscriptAcknowledgment(CollegeTranscript transcript, Integer recipientID, Integer senderID) {
+    private void sendTranscriptAcknowledgment(final CollegeTranscript transcript, final Integer recipientID, final Integer senderID) {
 
         Transaction tx = new Transaction();
 
@@ -182,9 +177,6 @@ public class FileProcessorService {
         tx.setAckURL(localServerWebServiceURL);
         tx.setOperation("SEND");
         tx.setOccurredAt(new Timestamp(Calendar.getInstance().getTimeInMillis()));
-
-        tx = transactionService.create(tx);
-
 
         File outboxDirectory = new File(localServerOutboxPath);
         outboxDirectory.mkdirs();
@@ -265,7 +257,7 @@ public class FileProcessorService {
             tx.setStatus(TransactionStatus.FAILURE);
         }
         finally {
-            transactionService.create(tx);
+            // transactionService.create(tx);
         }
     }
     /**
@@ -274,7 +266,7 @@ public class FileProcessorService {
      * transaction.getFilePath() returns the location of the file.
      */
     @Async
-    public void deliverFile(Transaction transaction){
+    public void deliverFile(final Transaction transaction){
 
         //If appropriate add logic here to model your custom file processing logic.
 
@@ -292,37 +284,23 @@ public class FileProcessorService {
                 if (DocumentType.FUNCTIONAL_ACKNOWLEDGEMENT.getDocumentName().equalsIgnoreCase(transaction.getDocumentType())) {
 
                 }
-                else if (DocumentType.COLLEGE_TRANSCRIPT.getDocumentName().equalsIgnoreCase(transaction.getDocumentType())) {
-                    final String format = transaction.getFileFormat();
-
-                    if (DocumentFormat.PESCXML.getFormatName().equalsIgnoreCase(format) ||
-                            DocumentFormat.JSON.getFormatName().equalsIgnoreCase(format)){
-
-                        CollegeTranscript collegeTranscript = getCollegeTranscript(transaction.getFilePath(), format);
-                        ack = buildAcceptedAcknowledgement(collegeTranscript, ackDocID) ;
-
-                        sendTranscriptAcknowledgment(collegeTranscript, transaction.getSenderId(), transaction.getRecipientId());
-                    }
-                }
-                else if (DocumentType.TRANSCRIPT_RESPONSE.getDocumentName().equalsIgnoreCase(transaction.getDocumentType())){
-
-                }
-                else if (DocumentType.TRANSCRIPT_REQUEST.getDocumentName().equalsIgnoreCase(transaction.getDocumentType())){
-                    ack = handleTranscriptRequest(transaction,ackDocID);
-                }
                 else if (DocumentType.TRANSCRIPT_ACKNOWLEDGEMENT.getDocumentName().equalsIgnoreCase(transaction.getDocumentType())) {
 
-
+                    // check
                     org.pesc.sdk.message.transcriptacknowledgement.v1_3.Acknowledgment transcriptAck =
-                            transcriptAcknowledgementService.getTranscriptAcknowledgement(transaction.getFilePath());
+                        transcriptAcknowledgementService.getTranscriptAcknowledgement(transaction.getFilePath());
 
                     String requestTrackingID = transcriptAck.getTransmissionData().getRequestTrackingID();
 
-                    Preconditions.checkArgument(org.apache.commons.lang3.StringUtils.isNotBlank(requestTrackingID) && org.apache.commons.lang3.StringUtils.isNumeric(requestTrackingID), requestTrackingID+" invalid, must be a nonBlank Integer");
-                    Transaction transcriptTransaction = transactionService.unsecuredFindById(Integer.parseInt(requestTrackingID));
+                    Preconditions.checkArgument(org.apache.commons.lang3.StringUtils.isNotBlank(requestTrackingID)
+                        && org.apache.commons.lang3.StringUtils.isNumeric(requestTrackingID), requestTrackingID
+                            + " invalid, must be a nonBlank Integer");
+                    Transaction transcriptTransaction = null; // transactionService.unsecuredFindById(Integer.parseInt(requestTrackingID));
                     Preconditions.checkNotNull(transcriptTransaction, "Cannot find transcript for ID:" + requestTrackingID);
-                    Preconditions.checkArgument(org.apache.commons.lang3.StringUtils.isNotBlank(transcriptTransaction.getFilePath()), "filePath is missing for transcriptTransaction for ID:"+requestTrackingID);
-                    CollegeTranscript collegeTranscript = getCollegeTranscript(transcriptTransaction.getFilePath(), transcriptTransaction.getFileFormat());
+                    Preconditions.checkArgument(org.apache.commons.lang3.StringUtils.isNotBlank(transcriptTransaction.getFilePath()),
+                            "filePath is missing for transcriptTransaction for ID:" + requestTrackingID);
+                    CollegeTranscript collegeTranscript = getCollegeTranscript(transcriptTransaction.getFilePath(), transcriptTransaction
+                            .getFileFormat());
 
                     transcriptAcknowledgementService.verifyTranscript(transcriptAck, collegeTranscript);
                 }
@@ -368,7 +346,7 @@ public class FileProcessorService {
             log.error("File processing failed.", e);
         }
         finally {
-            transactionService.update(transaction);
+            // transactionService.update(transaction);
         }
 
 
@@ -376,7 +354,7 @@ public class FileProcessorService {
     }
 
 
-    public Acknowledgment createFunctionalAcknowledgement(Transaction transaction, String ackDocID) {
+    public Acknowledgment createFunctionalAcknowledgement(final Transaction transaction, final String ackDocID) {
 
         SourceDestinationType source = academicRecordObjectFactory.createSourceDestinationType();
         OrganizationType org = academicRecordObjectFactory.createOrganizationType();
@@ -412,7 +390,7 @@ public class FileProcessorService {
 
     }
 
-    public ResponseHoldType createResponseHold(HoldReasonType reason, Date plannedReleaseDate) {
+    public ResponseHoldType createResponseHold(final HoldReasonType reason, final Date plannedReleaseDate) {
         ResponseHoldType hold = academicRecordObjectFactory.createResponseHoldType();
 
         hold.setHoldReason(reason);
@@ -421,14 +399,14 @@ public class FileProcessorService {
         return hold;
     }
 
-    public TranscriptResponse buildBaseTranscriptResponse(SourceDestinationType source,
-                                                          SourceDestinationType destination,
-                                                          String requestTrackingID,
-                                                          String transcriptRequestTrackingID,
-                                                          String transcriptResponseDocID,
-                                                          ResponseStatusType responseStatus,
-                                                          List<ResponseHoldType> holds,
-                                                          RequestedStudentType requestedStudent) {
+    public TranscriptResponse buildBaseTranscriptResponse(final SourceDestinationType source,
+                                                          final SourceDestinationType destination,
+                                                          final String requestTrackingID,
+                                                          final String transcriptRequestTrackingID,
+                                                          final String transcriptResponseDocID,
+                                                          final ResponseStatusType responseStatus,
+                                                          final List<ResponseHoldType> holds,
+                                                          final RequestedStudentType requestedStudent) {
         TranscriptResponse transcriptResponse = transcriptResponseObjectFactory.createTranscriptResponse();
 
         TransmissionDataType transmissionData = academicRecordObjectFactory.createTransmissionDataType();
@@ -459,7 +437,7 @@ public class FileProcessorService {
         return transcriptResponse;
     }
 
-    public Acknowledgment buildAcceptedAcknowledgement(TranscriptRequest transcriptRequest, String ackDocID) {
+    public Acknowledgment buildAcceptedAcknowledgement(final TranscriptRequest transcriptRequest, final String ackDocID) {
         Acknowledgment ack = buildBaseAcknowledgement(transcriptRequest.getTransmissionData().getDestination(),
                 transcriptRequest.getTransmissionData().getSource(), transcriptRequest.getTransmissionData().getRequestTrackingID(),
                 transcriptRequest.getTransmissionData().getDocumentID(), AcknowledgmentCodeType.ACCEPTED, ackDocID);
@@ -467,13 +445,13 @@ public class FileProcessorService {
         return ack;
     }
 
-    public Acknowledgment buildAcceptedAcknowledgement(SourceDestinationType source, SourceDestinationType destination,
-                                                       String requestTrackingID, String documentID, String ackDocID) {
+    public Acknowledgment buildAcceptedAcknowledgement(final SourceDestinationType source, final SourceDestinationType destination,
+                                                       final String requestTrackingID, final String documentID, final String ackDocID) {
         Acknowledgment ack = buildBaseAcknowledgement(source, destination, requestTrackingID, documentID, AcknowledgmentCodeType.ACCEPTED, ackDocID);
         return ack;
     }
-    public Acknowledgment buildRejectedAcknowledgement(SourceDestinationType source, SourceDestinationType destination,
-                                                       String requestTrackingID, String documentID, String ackDocID,  String noteMessage) {
+    public Acknowledgment buildRejectedAcknowledgement(final SourceDestinationType source, final SourceDestinationType destination,
+                                                       final String requestTrackingID, final String documentID, final String ackDocID,  final String noteMessage) {
 
         Acknowledgment ack = buildBaseAcknowledgement(source, destination, requestTrackingID, documentID,AcknowledgmentCodeType.REJECTED,ackDocID);
 
@@ -483,19 +461,19 @@ public class FileProcessorService {
 
     }
 
-    public Acknowledgment buildRejectedAcknowledgement(SourceDestinationType source, SourceDestinationType destination,
-                                                        String requestTrackingID, String documentID, List<SyntaxErrorType> errors, String ackDocID) {
+    public Acknowledgment buildRejectedAcknowledgement(final SourceDestinationType source, final SourceDestinationType destination,
+                                                        final String requestTrackingID, final String documentID, final List<SyntaxErrorType> errors, final String ackDocID) {
         Acknowledgment ack = buildBaseAcknowledgement(source, destination, requestTrackingID, documentID,AcknowledgmentCodeType.REJECTED,ackDocID);
         ack.getAcknowledgmentData().getSyntaxErrors().addAll(errors);
         return ack;
     }
 
-    public Acknowledgment buildBaseAcknowledgement(SourceDestinationType source,
-                                                   SourceDestinationType destination,
-                                                   String requestTrackingID,
-                                                   String documentID,
-                                                   AcknowledgmentCodeType ackCode,
-                                                   String ackDocID) {
+    public Acknowledgment buildBaseAcknowledgement(final SourceDestinationType source,
+                                                   final SourceDestinationType destination,
+                                                   final String requestTrackingID,
+                                                   final String documentID,
+                                                   final AcknowledgmentCodeType ackCode,
+                                                   final String ackDocID) {
         Acknowledgment ack = functionalacknowledgementObjectFactory.createAcknowledgment();
 
         TransmissionDataType transmissionData = academicRecordObjectFactory.createTransmissionDataType();
@@ -519,7 +497,7 @@ public class FileProcessorService {
         return ack;
     }
 
-    public Acknowledgment buildAcceptedAcknowledgement(CollegeTranscript transcript, String ackDocID) {
+    public Acknowledgment buildAcceptedAcknowledgement(final CollegeTranscript transcript, final String ackDocID) {
 
         Acknowledgment ack = buildAcceptedAcknowledgement(transcript.getTransmissionData().getDestination(),
                 transcript.getTransmissionData().getSource(), transcript.getTransmissionData().getDocumentID(),
@@ -528,7 +506,7 @@ public class FileProcessorService {
         return ack;
     }
 
-    public Acknowledgment buildRejectedAcknowledgement(CollegeTranscript transcript, List<SyntaxErrorType> errors, String ackDocID) {
+    public Acknowledgment buildRejectedAcknowledgement(final CollegeTranscript transcript, final List<SyntaxErrorType> errors, final String ackDocID) {
 
         Acknowledgment ack = buildRejectedAcknowledgement(transcript.getTransmissionData().getDestination(),
                 transcript.getTransmissionData().getSource(), transcript.getTransmissionData().getDocumentID(),
@@ -537,17 +515,17 @@ public class FileProcessorService {
         return ack;
     }
 
-    public Acknowledgment buildAcceptedBatchAcknowledgement(CollegeTranscript transcript, String batchID, String ackDocID) {
+    public Acknowledgment buildAcceptedBatchAcknowledgement(final CollegeTranscript transcript, final String batchID, final String ackDocID) {
 
         Acknowledgment ack = buildAcceptedAcknowledgement(transcript, ackDocID);
         ack.getAcknowledgmentData().setBatchID(batchID);
         return ack;
     }
 
-    public Acknowledgment buildRejectedBatchAcknowledgement(CollegeTranscript transcript,
-                                                            List<SyntaxErrorType> errors,
-                                                            String batchID,
-                                                            String ackDocID) {
+    public Acknowledgment buildRejectedBatchAcknowledgement(final CollegeTranscript transcript,
+                                                            final List<SyntaxErrorType> errors,
+                                                            final String batchID,
+                                                            final String ackDocID) {
 
         Acknowledgment ack = buildRejectedAcknowledgement(transcript, errors, ackDocID);
         ack.getAcknowledgmentData().setBatchID(batchID);
@@ -555,7 +533,7 @@ public class FileProcessorService {
     }
 
 
-    private void addLocator(SyntaxErrorType error,  BigInteger lineNumber,BigInteger columnNumber) {
+    private void addLocator(final SyntaxErrorType error,  final BigInteger lineNumber,final BigInteger columnNumber) {
         SyntaxErrorLocatorType locator = functionalacknowledgementObjectFactory.createSyntaxErrorLocatorType();
         locator.setLineNumber(lineNumber);
         locator.setColumnNumber(columnNumber);
@@ -563,7 +541,7 @@ public class FileProcessorService {
         error.setLocator(locator);
     }
 
-    private SyntaxErrorType createSyntaxError(String message, SeverityCodeType severityCode ) {
+    private SyntaxErrorType createSyntaxError(final String message, final SeverityCodeType severityCode ) {
         SyntaxErrorType error = functionalacknowledgementObjectFactory.createSyntaxErrorType();
         error.setErrorMessage(message);
         error.setSeverityCode(severityCode);
@@ -571,7 +549,7 @@ public class FileProcessorService {
         return error;
     }
 
-    private SyntaxErrorType createSyntaxError(String message, SeverityCodeType severityCode, BigInteger lineNumber,BigInteger columnNumber ) {
+    private SyntaxErrorType createSyntaxError(final String message, final SeverityCodeType severityCode, final BigInteger lineNumber,final BigInteger columnNumber ) {
         SyntaxErrorType error = functionalacknowledgementObjectFactory.createSyntaxErrorType();
         error.setErrorMessage(message);
         error.setSeverityCode(severityCode);
@@ -581,14 +559,14 @@ public class FileProcessorService {
 
 
 
-    private TranscriptRequest getTranscriptRequest(String filePath, String fileFormat) throws JAXBException, SAXException, OperationNotSupportedException {
+    private TranscriptRequest getTranscriptRequest(final String filePath, final String fileFormat) throws JAXBException, SAXException, OperationNotSupportedException {
 
         Unmarshaller u = serializationService.createTranscriptRequestUnmarshaller(true, fileFormat.equalsIgnoreCase("JSON"));
 
         return (TranscriptRequest) u.unmarshal(new File(filePath));
     }
 
-    private CollegeTranscript getCollegeTranscript(String filePath, String fileFormat) throws JAXBException, SAXException, OperationNotSupportedException {
+    private CollegeTranscript getCollegeTranscript(final String filePath, final String fileFormat) throws JAXBException, SAXException, OperationNotSupportedException {
 
         Unmarshaller u = serializationService.createTranscriptUnmarshaller(false, fileFormat.equalsIgnoreCase("JSON"));
         return (CollegeTranscript) u.unmarshal(new File(filePath));

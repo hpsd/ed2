@@ -18,74 +18,49 @@ package org.pesc.cds.domain;
 
 import org.pesc.cds.model.TransactionStatus;
 
-import javax.persistence.*;
 import java.sql.Timestamp;
 
-@Entity
-@Table(name="transactions")
+
 public class Transaction {
-	@Id
-	@Column(name = "id")
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Integer id;
-	
-	@Column(name="recipient_id")
+
 	private Integer recipientId;
 
-	@Column(name="sender_id")
 	private Integer senderId;
 
-	@Column(name="signer_id")
 	private Integer signerId;
 
-	@Column(name="sender_transaction_id")
 	private Integer senderTransactionId;
-	
-	@Column(name="file_format")
+
 	private String fileFormat;
 
-	@Column(name="document_type")
 	private String documentType;
 
-	@Column(name="department")
 	private String department;
-	
-	@Column(name="file_size")
+
 	private Long fileSize = 0l;
-	
-	@Column(name="file_path")
+
 	private String filePath;
 
-	@Column(name="request_file_path")
 	private String requestFilePath;
 
 	//The path to the PESC functional acknowledgement file, if there is one.
-	@Column(name="ack_file_path")
 	private String ackFilePath;
 
-	@Column(name="ack_url")
 	private String ackURL;
-	
-	@Column(name="operation")
+
 	private String operation;
-	
-	@Column(name="occurred_at")
+
 	private Timestamp occurredAt;
-	
-	@Column(name="acknowledged_at")
+
 	private Timestamp acknowledgedAt;
 
-	@Column(name="error", columnDefinition = "text")
 	private String error;
 
-	@Column(name="delivery_message")
 	private String message;
 
-	@Column(name="delivery_status")
-	@Enumerated(EnumType.STRING)
 	private TransactionStatus status;
-	
-	@Column(name="acknowledged")
+
 	private Boolean acknowledged = false;
 
 	public Transaction() {}
@@ -94,7 +69,7 @@ public class Transaction {
 		return id;
 	}
 
-	public void setId(Integer id) {
+	public void setId(final Integer id) {
 		this.id = id;
 	}
 
@@ -102,7 +77,7 @@ public class Transaction {
 		return recipientId;
 	}
 
-	public void setRecipientId(Integer recipientId) {
+	public void setRecipientId(final Integer recipientId) {
 		this.recipientId = recipientId;
 	}
 
@@ -110,7 +85,7 @@ public class Transaction {
 		return senderId;
 	}
 
-	public void setSenderId(Integer senderId) {
+	public void setSenderId(final Integer senderId) {
 		this.senderId = senderId;
 	}
 
@@ -118,7 +93,7 @@ public class Transaction {
 		return fileFormat;
 	}
 
-	public void setFileFormat(String fileFormat) {
+	public void setFileFormat(final String fileFormat) {
 		this.fileFormat = fileFormat;
 	}
 
@@ -126,7 +101,7 @@ public class Transaction {
 		return documentType;
 	}
 
-	public void setDocumentType(String documentType) {
+	public void setDocumentType(final String documentType) {
 		this.documentType = documentType;
 	}
 
@@ -134,7 +109,7 @@ public class Transaction {
 		return department;
 	}
 
-	public void setDepartment(String department) {
+	public void setDepartment(final String department) {
 		this.department = department;
 	}
 
@@ -142,7 +117,7 @@ public class Transaction {
 		return fileSize;
 	}
 
-	public void setFileSize(Long fileSize) {
+	public void setFileSize(final Long fileSize) {
 		this.fileSize = fileSize;
 	}
 
@@ -150,7 +125,7 @@ public class Transaction {
 		return filePath;
 	}
 
-	public void setFilePath(String filePath) {
+	public void setFilePath(final String filePath) {
 		this.filePath = filePath;
 	}
 
@@ -158,7 +133,7 @@ public class Transaction {
 		return requestFilePath;
 	}
 
-	public void setRequestFilePath(String requestFilePath) {
+	public void setRequestFilePath(final String requestFilePath) {
 		this.requestFilePath = requestFilePath;
 	}
 
@@ -166,7 +141,7 @@ public class Transaction {
 		return operation;
 	}
 
-	public void setOperation(String operation) {
+	public void setOperation(final String operation) {
 		this.operation = operation;
 	}
 
@@ -174,7 +149,7 @@ public class Transaction {
 		return occurredAt;
 	}
 
-	public void setOccurredAt(Timestamp occurredAt) {
+	public void setOccurredAt(final Timestamp occurredAt) {
 		this.occurredAt = occurredAt;
 	}
 
@@ -182,7 +157,7 @@ public class Transaction {
 		return acknowledgedAt;
 	}
 
-	public void setAcknowledgedAt(Timestamp acknowledgedAt) {
+	public void setAcknowledgedAt(final Timestamp acknowledgedAt) {
 		this.acknowledgedAt = acknowledgedAt;
 	}
 
@@ -190,7 +165,7 @@ public class Transaction {
 		return error;
 	}
 
-	public void setError(String error) {
+	public void setError(final String error) {
 		this.error = error;
 	}
 
@@ -198,7 +173,7 @@ public class Transaction {
 		return acknowledged;
 	}
 
-	public void setAcknowledged(Boolean acknowledged) {
+	public void setAcknowledged(final Boolean acknowledged) {
 		this.acknowledged = acknowledged;
 	}
 
@@ -206,7 +181,7 @@ public class Transaction {
 		return message;
 	}
 
-	public void setMessage(String message) {
+	public void setMessage(final String message) {
 		this.message = message;
 	}
 
@@ -214,7 +189,7 @@ public class Transaction {
 		return status;
 	}
 
-	public void setStatus(TransactionStatus status) {
+	public void setStatus(final TransactionStatus status) {
 		this.status = status;
 	}
 
@@ -222,7 +197,7 @@ public class Transaction {
 		return ackURL;
 	}
 
-	public void setAckURL(String ackURL) {
+	public void setAckURL(final String ackURL) {
 		this.ackURL = ackURL;
 	}
 
@@ -230,7 +205,7 @@ public class Transaction {
 		return senderTransactionId;
 	}
 
-	public void setSenderTransactionId(Integer senderTransactionId) {
+	public void setSenderTransactionId(final Integer senderTransactionId) {
 		this.senderTransactionId = senderTransactionId;
 	}
 
@@ -238,7 +213,7 @@ public class Transaction {
 		return signerId;
 	}
 
-	public void setSignerId(Integer signerId) {
+	public void setSignerId(final Integer signerId) {
 		this.signerId = signerId;
 	}
 
@@ -246,7 +221,7 @@ public class Transaction {
 		return ackFilePath;
 	}
 
-	public void setAckFilePath(String ackFilePath) {
+	public void setAckFilePath(final String ackFilePath) {
 		this.ackFilePath = ackFilePath;
 	}
 

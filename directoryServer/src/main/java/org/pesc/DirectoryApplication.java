@@ -16,12 +16,8 @@
 
 package org.pesc;
 
-import org.apache.catalina.Context;
-import org.apache.catalina.connector.Connector;
 import org.apache.catalina.startup.Tomcat;
 import org.apache.cxf.transport.servlet.CXFServlet;
-import org.apache.tomcat.util.descriptor.web.SecurityCollection;
-import org.apache.tomcat.util.descriptor.web.SecurityConstraint;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -39,13 +35,13 @@ import org.springframework.scheduling.annotation.EnableAsync;
 public class DirectoryApplication {
 
 
-	public static void main(String[] args) {
+	public static void main(final String[] args) {
 		SpringApplication.run(DirectoryApplication.class, args);
 	}
 
 
     @Bean
-    public ServletRegistrationBean servletRegistrationBean(ApplicationContext context) {
+    public ServletRegistrationBean servletRegistrationBean(final ApplicationContext context) {
         return new ServletRegistrationBean(new CXFServlet(), "/services/*");
     }
 
@@ -55,12 +51,12 @@ public class DirectoryApplication {
      * @return TomcatEmbeddedServletContainerFactory
      */
     @Bean
-    public TomcatEmbeddedServletContainerFactory tomcatFactory(@Value("${http.port}") Integer port, @Value("${server.port}")Integer securePort) {
-        TomcatEmbeddedServletContainerFactory factory =  new TomcatEmbeddedServletContainerFactory() {
+    public TomcatEmbeddedServletContainerFactory tomcatFactory(@Value("${http.port}") final Integer port) {
+        TomcatEmbeddedServletContainerFactory factory = new TomcatEmbeddedServletContainerFactory(port) {
 
             @Override
             protected TomcatEmbeddedServletContainer getTomcatEmbeddedServletContainer(
-                    Tomcat tomcat) {
+                    final Tomcat tomcat) {
                 tomcat.enableNaming();
                 return super.getTomcatEmbeddedServletContainer(tomcat);
             }
@@ -82,7 +78,7 @@ public class DirectoryApplication {
         };
 
         //HTTPS
-        factory.addAdditionalTomcatConnectors(createStandardConnector(port,securePort));
+        // factory.addAdditionalTomcatConnectors(createStandardConnector(port));
 
 
         /* Not using AJP do to reverse proxy issues revolving around redirects that use an absolute path.  The
@@ -103,14 +99,15 @@ public class DirectoryApplication {
     }
 
 
-    private Connector createStandardConnector(Integer port, Integer securePort) {
-        Connector connector = new Connector("org.apache.coyote.http11.Http11NioProtocol");
-        connector.setScheme("http");
-        connector.setSecure(false);
-        //connector.setRedirectPort(securePort);
-        connector.setPort(port);
-        return connector;
-    }
+    // private Connector createStandardConnector(final Integer port) {
+    // Connector connector = new
+    // Connector("org.apache.coyote.http11.Http11NioProtocol");
+    // connector.setScheme("http");
+    // connector.setSecure(false);
+    // //connector.setRedirectPort(securePort);
+    // connector.setPort(port);
+    // return connector;
+    // }
 
 
 

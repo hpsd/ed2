@@ -16,14 +16,10 @@
 
 package org.pesc.cds.web;
 
-import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.tomcat.util.http.fileupload.IOUtils;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.pesc.cds.domain.Transaction;
-import org.pesc.cds.repository.TransactionService;
 import org.pesc.cds.service.OrganizationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -34,14 +30,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
-
 import javax.servlet.http.HttpServletResponse;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
 import java.security.Principal;
 import java.util.Collection;
 
@@ -59,14 +48,15 @@ public class AppController {
 
     private final OrganizationService organizationService;
 
-    @Autowired
-    private TransactionService transactionService;
+    // @Autowired
+    // private TransactionService transactionService;
 
     @Autowired
     public AppController( @Value("${networkServer.id}") final String edExID, final OrganizationService organizationService) {
         this.organizationService = organizationService;
         localServerId = edExID;
-        organization = organizationService.getOrganization(Integer.valueOf(localServerId));
+        // organization =
+        // organizationService.getOrganization(Integer.valueOf(localServerId));
     }
 
 
@@ -130,8 +120,8 @@ public class AppController {
     public String getDocumentation(final Model model) throws JSONException {
         buildCommonModel(model);
 
-        model.addAttribute("organizationName", organization.getString("name"));
-        model.addAttribute("organizationId", organization.getInt("id"));
+        model.addAttribute("organizationName", "Digitary");
+        model.addAttribute("organizationId", "1232");
 
         return "documentation";
     }
@@ -156,61 +146,7 @@ public class AppController {
     }
 
 
-    @RequestMapping(value = "/files", method = RequestMethod.GET)
-    public void getFile(
-            @RequestParam("tran_id") final Integer tranID,
-            @RequestParam(value = "show_request", required = false) final Boolean showRequest,
-            @RequestParam(value = "show_acknowledgement", required = false) final Boolean showAck,
-            final HttpServletResponse response) {
-        try {
 
-            //TODO for security: create randomize the transaction ID with a lookup table.
-
-            Transaction transaction = transactionService.findById(tranID);
-
-            if (transaction == null) {
-                throw new RuntimeException("Invalid transaction id.");
-            }
-
-            String filePath = BooleanUtils.isTrue(showRequest) ? transaction.getRequestFilePath() : transaction.getFilePath();
-            String fileFormat = BooleanUtils.isTrue(showRequest) ? "xml" : transaction.getFileFormat();
-
-            InputStream is = new FileInputStream(new File(filePath));
-
-            setContentType(response, fileFormat);
-            IOUtils.copy(is, response.getOutputStream());
-            response.flushBuffer();
-        } catch (IOException e) {
-            log.error("Error writing file to output stream. Transaction id " + tranID, e);
-            throw new RuntimeException("IOError writing file to output stream");
-        }
-    }
-
-    @RequestMapping(value = "/files/acknowledgement", method = RequestMethod.GET)
-    public void getFile(
-            @RequestParam("tran_id") final Integer tranID,
-            final HttpServletResponse response) {
-        try {
-
-            Transaction transaction = transactionService.findById(tranID);
-
-            if (transaction == null) {
-                throw new RuntimeException("Invalid transaction id.");
-            }
-
-            String filePath = transaction.getAckFilePath();
-            String fileFormat = "xml";
-
-            InputStream is = new FileInputStream(new File(filePath));
-
-            setContentType(response, fileFormat);
-            IOUtils.copy(is, response.getOutputStream());
-            response.flushBuffer();
-        } catch (IOException e) {
-            log.error("Error writing file to output stream. Transaction id " + tranID, e);
-            throw new RuntimeException("IOError writing file to output stream");
-        }
-    }
 
     @RequestMapping("/admin")
     public String getAdminPage(final Model model) {
@@ -241,9 +177,10 @@ public class AppController {
             organization = organizationService.getOrganization(Integer.valueOf(localServerId));
         }
 
-        if (organization == null) {
-            throw new IllegalStateException("Failed to retrieve organization info from directory for network server ID " + localServerId );
-        }
+        // if (organization == null) {
+        // throw new IllegalStateException("Failed to retrieve organization info from
+        // directory for network server ID " + localServerId );
+        // }
 
         return organization;
     }
@@ -253,9 +190,9 @@ public class AppController {
 
         buildCommonModel(model);
 
-        getOrganization();
+        // getOrganization();
 
-        boolean institution = organizationService.isInstitution(organization);
+        boolean institution = true; // organizationService.isInstitution(organization);
         model.addAttribute("institution", institution);
         return "fragments :: upload";
     }
